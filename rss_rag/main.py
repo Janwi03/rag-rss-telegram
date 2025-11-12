@@ -1,6 +1,6 @@
 import asyncio
 from rss_rag.rss_reader import fetch_rss_articles
-from rss_rag.summarizer import summarize_text
+from rss_rag.summarizer import LocalSummarizer
 from rss_rag.faiss_store import FAISSStore
 from rss_rag.embeddings import generate_embedding
 from rss_rag.bot_sender import TELEGRAM_BOT_TOKEN, CHAT_ID
@@ -11,6 +11,7 @@ async def daily_digest():
     print("🔹 Starting daily RSS summarization process...")
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     faiss_db = FAISSStore("rss_rag/rss_articles.index")
+    summarizer = LocalSummarizer()  # ✅ Initialize summarizer class
 
     # STEP 1: Fetch new articles
     articles = fetch_rss_articles([
@@ -35,7 +36,7 @@ async def daily_digest():
 
         if not is_duplicate:
             # STEP 4: Generate concise summary
-            summarized_text = summarize_text(summary)
+            summarized_text = summarizer.summarize_text(summary)  # ✅ Updated usage
 
             # STEP 5: Send to Telegram
             message = f"🗞️ *{title}*\n\n{summarized_text}\n\n[Read Full Article]({link})"
