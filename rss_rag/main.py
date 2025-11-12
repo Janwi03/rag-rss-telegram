@@ -1,46 +1,43 @@
 import asyncio
+from telegram import Bot
 from rss_rag.rss_reader import fetch_rss_articles
 from rss_rag.summarizer import LocalSummarizer
 from rss_rag.faiss_store import FAISSStore
-try:
-    from rss_rag.embeddings import generate_embedding
-except ImportError:
-    from embeddings import generate_embedding
-
+from rss_rag.embeddings import generate_embedding  # ✅ Simplified & fixed import
 from rss_rag.bot_sender import TELEGRAM_BOT_TOKEN, CHAT_ID
-from telegram import Bot
 
 
 async def daily_digest():
     print("🔹 Starting daily RSS summarization process...")
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     faiss_db = FAISSStore("rss_rag/rss_articles.index")
-    summarizer = LocalSummarizer()  # ✅ Initialize summarizer class
+    summarizer = LocalSummarizer()
 
     # STEP 1: Fetch new articles
-    articles = fetch_rss_articles([
+    rss_feeds = [
         "https://feeds.bbci.co.uk/news/rss.xml",
         "https://www.theverge.com/rss/index.xml"
-    ])
+    ]
+    articles = fetch_rss_articles(rss_feeds)
     print(f"📰 Found {len(articles)} articles.")
 
     # STEP 2: Process and summarize
     for article in articles:
-        title = article["title"]
-        link = article["link"]
+        title = article.get("title", "Untitled Article")
+        link = article.get("link", "#")
         summary = article.get("summary", "")
 
-        # Skip empty summaries
         if not summary.strip():
+            print(f"⚠️ Skipping empty summary for: {title}")
             continue
 
-        # STEP 3: Check duplicate using FAISS embeddings
+        # STEP 3: Generate embedding and check for duplicates
         emb = generate_embedding(summary)
         is_duplicate = faiss_db.is_duplicate(emb)
 
         if not is_duplicate:
-            # STEP 4: Generate concise summary
-            summarized_text = summarizer.summarize_text(summary)  # ✅ Updated usage
+            # STEP 4: Summarize article
+            summarized_text = summarizer.summarize_text(summary)
 
             # STEP 5: Send to Telegram
             message = f"🗞️ *{title}*\n\n{summarized_text}\n\n[Read Full Article]({link})"
@@ -56,4 +53,7 @@ async def daily_digest():
 
 
 if __name__ == "__main__":
-    asyncio.run(daily_digest())
+    try:
+        asyncio.run(daily_digest())
+    except Exception as e:
+        print(f"❌ Error during daily digest: {e}")
