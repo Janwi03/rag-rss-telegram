@@ -1,0 +1,7 @@
+feedparser
+sentence-transformers
+faiss-cpu
+llama-cpp-python
+python-telegram-bot==20.7
+python-dotenv
+sqlite-utils

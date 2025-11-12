@@ -1,0 +1,24 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# Model caches
+*.bin
+*.pt
+*.safetensors
+*.pkl
+*.faiss
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
