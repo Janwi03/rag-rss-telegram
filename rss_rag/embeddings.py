@@ -1,31 +1,41 @@
-# rss_rag/embeddings.py
 """
 Defensive embedding module.
-Always defines `generate_embedding` at import time (no ImportError).
-Attempts to load SentenceTransformer; if it fails, falls back to a zero-vector stub.
+Ensures `generate_embedding` is always available.
+If SentenceTransformer fails to load, it falls back to a safe zero-vector stub.
 """
 
 import numpy as np
 import traceback
 
-# DIMENSION — keep consistent with your FAISS store
+# ----------------------------------------------------
+# EMBEDDING DIMENSION (must match your FAISS store)
+# ----------------------------------------------------
 EMB_DIM = 384
 
-# --- 1) Define a safe stub immediately so import never fails ---
+
+# ----------------------------------------------------
+# 1️⃣ Define a safe stub immediately (always available)
+# ----------------------------------------------------
 def _stub_generate_embedding(text: str) -> np.ndarray:
-    """Return a zero vector stub. Safe fallback if model not available."""
+    """Return a zero vector if the model isn't available or text is empty."""
     if not isinstance(text, str) or not text.strip():
         return np.zeros((EMB_DIM,), dtype=np.float32)
     return np.zeros((EMB_DIM,), dtype=np.float32)
 
-# export name (will be overridden if model loads successfully)
+
+# Export the stub by default
 generate_embedding = _stub_generate_embedding
 
-# --- 2) Try to load the real model (non-fatal if it fails) ---
+
+# ----------------------------------------------------
+# 2️⃣ Attempt to load the real SentenceTransformer model
+# ----------------------------------------------------
 try:
     from sentence_transformers import SentenceTransformer
+
     MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-    print(f"🔹 Attempting to load embedding model: {MODEL_NAME}")
+    print(f"🔹 Loading embedding model: {MODEL_NAME} ...")
+
     _embedding_model = SentenceTransformer(MODEL_NAME)
     print("✅ Embedding model loaded successfully.")
 
@@ -35,12 +45,18 @@ try:
         emb = _embedding_model.encode([text])[0]
         return np.array(emb, dtype=np.float32)
 
-    # override stub with the real function
+    # Override stub with the real embedding generator
     generate_embedding = _real_generate_embedding
 
 except Exception as e:
-    # keep the stub; print clear diagnostics for CI logs
-    print("❌ Failed to load SentenceTransformer for embeddings.")
-    print("❌ Exception traceback:")
-    traceback.print_exc()
-    print("⚠️ Falling back to zero-vector generate_embedding (stub).")
+    print("⚠️ Using fallback stub for embeddings — model load failed.")
+    print("   Reason:", e)
+    traceback.print_exc(limit=1)
+
+
+# ----------------------------------------------------
+# 3️⃣ Final safety: ensure function exists (for CI/CD)
+# ----------------------------------------------------
+if not callable(generate_embedding):
+    print("🚨 CRITICAL: generate_embedding was undefined — restoring stub.")
+    generate_embedding = _stub_generate_embedding
