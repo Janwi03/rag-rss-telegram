@@ -7,7 +7,7 @@ import pickle
 
 class FAISSStore:
     def __init__(self, dim=384, index_path="data/faiss_index.bin", meta_path="data/meta.pkl"):
-        self.dim = dim
+        self.dim = int(dim)  # ✅ ensure dimension is an integer
         self.index_path = index_path
         self.meta_path = meta_path
 
@@ -22,7 +22,7 @@ class FAISSStore:
                 self.metadata = pickle.load(f)
         else:
             print("🆕 Creating new FAISS index...")
-            self.index = faiss.IndexFlatIP(dim)  # cosine similarity
+            self.index = faiss.IndexFlatIP(self.dim)  # ✅ now guaranteed int
             self.metadata = []
 
     def add(self, embeddings, metas):
