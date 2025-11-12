@@ -99,7 +99,7 @@ except Exception as exc:
 async def daily_digest():
     print("🔹 Starting daily RSS summarization process...")
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    faiss_db = FAISSStore("rss_rag/rss_articles.index")
+    faiss_db = FAISSStore(dim=384, index_path="rss_rag/rss_articles.index", meta_path="rss_rag/rss_articles_meta.pkl")
     summarizer = LocalSummarizer()
 
     rss_feeds = [
