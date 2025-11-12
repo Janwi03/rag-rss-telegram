@@ -106,8 +106,16 @@ async def daily_digest():
         "https://feeds.bbci.co.uk/news/rss.xml",
         "https://www.theverge.com/rss/index.xml"
     ]
-    articles = fetch_rss_articles(rss_feeds)
-    print(f"📰 Found {len(articles)} articles.")
+    articles = []
+    for feed_url in rss_feeds:
+        try:
+            fetched = fetch_rss_articles(feed_url)
+            articles.extend(fetched)
+            print(f"✅ Fetched {len(fetched)} from {feed_url}")
+        except Exception as e:
+            print(f"⚠️ Failed to fetch {feed_url}: {e}")
+
+    print(f"📰 Total articles collected: {len(articles)}")
 
     for article in articles:
         title = article.get("title", "Untitled Article")
