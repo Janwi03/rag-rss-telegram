@@ -2,7 +2,11 @@ import asyncio
 from rss_rag.rss_reader import fetch_rss_articles
 from rss_rag.summarizer import LocalSummarizer
 from rss_rag.faiss_store import FAISSStore
-from rss_rag.embeddings import generate_embedding
+try:
+    from rss_rag.embeddings import generate_embedding
+except ImportError:
+    from embeddings import generate_embedding
+
 from rss_rag.bot_sender import TELEGRAM_BOT_TOKEN, CHAT_ID
 from telegram import Bot
 
